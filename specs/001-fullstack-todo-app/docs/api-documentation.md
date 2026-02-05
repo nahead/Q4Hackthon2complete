@@ -1,0 +1,256 @@
+# API Documentation: Todo Web Application
+
+**Version**: 1.0.0
+**Base URL**: `/api`
+**Last Updated**: 2026-01-31
+
+## Authentication
+
+All endpoints require JWT authentication via the `Authorization` header:
+
+```
+Authorization: Bearer <jwt_token>
+```
+
+## Common Responses
+
+### Success Response
+```json
+{
+  "success": true,
+  "data": { /* response data */ }
+}
+```
+
+### Error Response
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Human readable error message"
+  }
+}
+```
+
+## Endpoints
+
+### Authentication
+
+#### POST /auth/register
+Register a new user
+
+**Request Body**:
+```json
+{
+  "email": "user@example.com",
+  "password": "secure_password"
+}
+```
+
+**Success Response (201)**:
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": 1,
+      "email": "user@example.com"
+    },
+    "token": "jwt_token_here"
+  }
+}
+```
+
+#### POST /auth/login
+Login existing user
+
+**Request Body**:
+```json
+{
+  "email": "user@example.com",
+  "password": "secure_password"
+}
+```
+
+**Success Response (200)**:
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": 1,
+      "email": "user@example.com"
+    },
+    "token": "jwt_token_here"
+  }
+}
+```
+
+#### POST /auth/logout
+Logout current user
+
+**Success Response (200)**:
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Successfully logged out"
+  }
+}
+```
+
+### Tasks
+
+#### GET /tasks
+Get all tasks for the authenticated user
+
+**Query Parameters**:
+- `completed` (optional): boolean - filter by completion status
+- `limit` (optional): integer (1-100) - max number of results for pagination
+- `offset` (optional): integer (>=0) - pagination offset
+
+**Success Response (200)**:
+```json
+{
+  "success": true,
+  "data": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Complete project",
+        "description": "Finish the todo app implementation",
+        "completed": false,
+        "user_id": 1,
+        "created_at": "2023-10-01T10:00:00Z",
+        "updated_at": "2023-10-01T10:00:00Z"
+      }
+    ],
+    "total": 1,
+    "limit": 10,
+    "offset": 0
+  }
+}
+```
+
+#### POST /tasks
+Create a new task for the authenticated user
+
+**Request Body**:
+```json
+{
+  "title": "New task",
+  "description": "Task description (optional)"
+}
+```
+
+**Success Response (201)**:
+```json
+{
+  "success": true,
+  "data": {
+    "task": {
+      "id": 1,
+      "title": "New task",
+      "description": "Task description (optional)",
+      "completed": false,
+      "user_id": 1,
+      "created_at": "2023-10-01T10:00:00Z",
+      "updated_at": "2023-10-01T10:00:00Z"
+    }
+  }
+}
+```
+
+#### GET /tasks/{task_id}
+Get a specific task by ID
+
+**Path Parameter**:
+- `task_id`: integer - task identifier
+
+**Success Response (200)**:
+```json
+{
+  "success": true,
+  "data": {
+    "task": {
+      "id": 1,
+      "title": "Complete project",
+      "description": "Finish the todo app implementation",
+      "completed": false,
+      "user_id": 1,
+      "created_at": "2023-10-01T10:00:00Z",
+      "updated_at": "2023-10-01T10:00:00Z"
+    }
+  }
+}
+```
+
+#### PUT /tasks/{task_id}
+Update a specific task
+
+**Path Parameter**:
+- `task_id`: integer - task identifier
+
+**Request Body**:
+```json
+{
+  "title": "Updated task title (optional)",
+  "description": "Updated description (optional)",
+  "completed": true
+}
+```
+
+**Success Response (200)**:
+```json
+{
+  "success": true,
+  "data": {
+    "task": {
+      "id": 1,
+      "title": "Updated task title",
+      "description": "Updated description",
+      "completed": true,
+      "user_id": 1,
+      "created_at": "2023-10-01T10:00:00Z",
+      "updated_at": "2023-10-02T15:30:00Z"
+    }
+  }
+}
+```
+
+#### DELETE /tasks/{task_id}
+Delete a specific task
+
+**Path Parameter**:
+- `task_id`: integer - task identifier
+
+**Success Response (200)**:
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Task deleted successfully"
+  }
+}
+```
+
+## Error Codes
+
+| Code | HTTP Status | Description |
+|------|-------------|-------------|
+| AUTH_001 | 401 | Missing or invalid authentication token |
+| AUTH_002 | 401 | Expired authentication token |
+| AUTH_003 | 403 | Insufficient permissions |
+| VALIDATION_001 | 400 | Request validation failed |
+| RESOURCE_001 | 404 | Resource not found |
+| SERVER_001 | 500 | Internal server error |
+
+## Security Considerations
+
+1. All endpoints require valid JWT authentication
+2. Users can only access their own tasks
+3. User ID in JWT is used to validate access, not URL parameters
+4. Input validation applied to all request bodies
+5. SQL injection prevention through parameterized queries
+6. Pagination and rate limiting implemented to prevent abuse

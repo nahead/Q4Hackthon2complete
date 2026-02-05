@@ -1,0 +1,12 @@
+version: "1.0.0"
+features:
+  - name: "fullstack-todo-app"
+    path: "./specs/001-fullstack-todo-app"
+    status: "implemented"
+  - name: "ai-chatbot"
+    path: "./specs/1-ai-chatbot"
+    status: "implemented"
+templates:
+  spec: ".specify/templates/spec-template.md"
+  plan: ".specify/templates/plan-template.md"
+  tasks: ".specify/templates/tasks-template.md"

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chatbot Todo App</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Authentication Section -->
+        <div id="auth-section" class="auth-section">
+            <div class="auth-container">
+                <h2>Welcome to AI Chatbot Todo</h2>
+                <div class="auth-tabs">
+                    <button id="login-tab" class="tab-btn active">Login</button>
+                    <button id="register-tab" class="tab-btn">Register</button>
+                </div>
+                <form id="auth-form" class="auth-form">
+                    <input type="email" id="email" placeholder="Email" required>
+                    <input type="password" id="password" placeholder="Password" required>
+                    <input type="text" id="name" placeholder="Name" style="display: none;" required>
+                    <button type="submit" id="auth-submit">Login</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Main App Section -->
+        <div id="main-app" class="main-app" style="display: none;">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-content">
+                    <h1>AI Chatbot Todo</h1>
+                    <div class="user-info">
+                        <span id="user-name">User</span>
+                        <button id="logout-btn" class="btn btn-secondary">Logout</button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="app-container">
+                <!-- Sidebar -->
+                <aside class="sidebar">
+                    <nav class="nav-menu">
+                        <button id="chat-tab" class="nav-btn active">
+                            <i class="fas fa-comments"></i>
+                            Chat
+                        </button>
+                        <button id="todos-tab" class="nav-btn">
+                            <i class="fas fa-tasks"></i>
+                            Todos
+                        </button>
+                        <button id="analytics-tab" class="nav-btn">
+                            <i class="fas fa-chart-bar"></i>
+                            Analytics
+                        </button>
+                    </nav>
+                </aside>
+
+                <!-- Main Content -->
+                <main class="main-content">
+                    <!-- Chat Interface -->
+                    <div id="chat-interface" class="interface active">
+                        <div class="chat-container">
+                            <div class="chat-messages" id="chat-messages">
+                                <div class="welcome-message">
+                                    <h3>Hello! I'm your AI assistant 🤖</h3>
+                                    <p>Ask me to help you manage your todos, create new tasks, or get productivity tips!</p>
+                                </div>
+                            </div>
+                            <div class="chat-input-container">
+                                <textarea
+                                    id="chat-input"
+                                    placeholder="Type your message here..."
+                                    rows="2"
+                                ></textarea>
+                                <button id="send-message" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Todos Interface -->
+                    <div id="todos-interface" class="interface">
+                        <div class="todos-container">
+                            <div class="todos-header">
+                                <h2>Your Todos</h2>
+                                <div class="todos-filters">
+                                    <select id="filter-status">
+                                        <option value="">All</option>
+                                        <option value="false">Pending</option>
+                                        <option value="true">Completed</option>
+                                    </select>
+                                    <select id="filter-priority">
+                                        <option value="">All Priorities</option>
+                                        <option value="high">High</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="low">Low</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="add-todo-form">
+                                <input type="text" id="todo-title" placeholder="Add a new todo...">
+                                <button id="add-todo" class="btn btn-primary">Add</button>
+                            </div>
+
+                            <div class="todos-list" id="todos-list">
+                                <!-- Todos will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Analytics Interface -->
+                    <div id="analytics-interface" class="interface">
+                        <div class="analytics-container">
+                            <h2>Productivity Analytics</h2>
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <h3>Total Todos</h3>
+                                    <span id="total-todos">0</span>
+                                </div>
+                                <div class="stat-card">
+                                    <h3>Completed</h3>
+                                    <span id="completed-todos">0</span>
+                                </div>
+                                <div class="stat-card">
+                                    <h3>Pending</h3>
+                                    <span id="pending-todos">0</span>
+                                </div>
+                                <div class="stat-card">
+                                    <h3>Completion Rate</h3>
+                                    <span id="completion-rate">0%</span>
+                                </div>
+                            </div>
+
+                            <div class="suggestions-section">
+                                <h3>AI Suggestions</h3>
+                                <button id="get-suggestions" class="btn btn-secondary">Get Suggestions</button>
+                                <div id="suggestions-list" class="suggestions-list">
+                                    <!-- Suggestions will be populated here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

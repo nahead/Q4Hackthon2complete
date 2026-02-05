@@ -1,0 +1,644 @@
+"""Stateless chat API endpoint for the AI Chatbot Todo application.
+
+This endpoint follows the stateless server rule and loads conversation history
+from the database on every request.
+"""
+# Last updated: 2026-02-02 to fix agent initialization issue
+
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
+from sqlalchemy import select
+from src.models import User, Task, Conversation, Message, MessageRole, TaskStatus, TaskPriority
+from src.database import SessionLocal
+from src.config import config
+from typing import List, Dict, Any
+from datetime import datetime
+from pydantic import BaseModel
+import logging
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+router = APIRouter(prefix="/chat", tags=["chat"])
+
+class ChatRequest(BaseModel):
+    """Request model for chat endpoint."""
+    message: str
+    user_id: int
+
+
+class ChatResponse(BaseModel):
+    """Response model for chat endpoint."""
+    response: str
+    conversation_id: int
+    timestamp: datetime
+
+# Dependency to get database session
+def get_db_session():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+async def get_conversation_history(db: Session, user_id: int, conversation_id: int) -> List[Dict[str, str]]:
+    """Load conversation history from database."""
+    # Get the conversation
+    conversation = db.query(Conversation).filter(Conversation.id == conversation_id).first()
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    # Verify user owns the conversation
+    if conversation.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    # Get all messages in the conversation ordered by timestamp
+    messages = db.query(Message).filter(Message.conversation_id == conversation_id).order_by(Message.timestamp).all()
+
+    # Convert messages to dictionary format
+    history = []
+    for message in messages:
+        history.append({
+            "role": message.role.value,
+            "content": message.content,
+            "timestamp": message.timestamp.isoformat()
+        })
+
+    return history
+
+
+async def create_conversation_if_not_exists(db: Session, user_id: int, title: str = "Default Chat") -> int:
+    """Create a new conversation if one doesn't exist."""
+    # Check if user already has a default conversation
+    conversation = db.query(Conversation).filter(Conversation.user_id == user_id).filter(Conversation.title == title).order_by(Conversation.created_at.desc()).first()
+
+    if conversation:
+        return conversation.id
+
+    # Create new conversation
+    new_conversation = Conversation(
+        user_id=user_id,
+        title=title,
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow()
+    )
+    db.add(new_conversation)
+    db.commit()
+    db.refresh(new_conversation)
+
+    return new_conversation.id
+
+
+async def save_message(db: Session, conversation_id: int, user_id: int, role: MessageRole, content: str):
+    """Save a message to the database."""
+    message = Message(
+        conversation_id=conversation_id,
+        user_id=user_id,
+        role=role,
+        content=content,
+        timestamp=datetime.utcnow()
+    )
+    db.add(message)
+    db.commit()
+
+
+@router.get("/{user_id}/history")
+async def get_chat_history(
+    user_id: int,
+    db: Session = Depends(get_db_session)
+):
+    """
+    Get conversation history for a user
+    """
+    try:
+        logger.info(f"Getting chat history for user {user_id}")
+
+        # Get the latest conversation for the user
+        conversation = db.query(Conversation).filter(Conversation.user_id == user_id).order_by(Conversation.updated_at.desc()).first()
+
+        if not conversation:
+            # Create a default conversation if none exists
+            conversation = Conversation(
+                user_id=user_id,
+                title=f"Chat {datetime.utcnow().strftime('%Y-%m-%d')}",
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow()
+            )
+            db.add(conversation)
+            db.commit()
+            db.refresh(conversation)
+
+        # Get all messages in the conversation
+        messages = db.query(Message).filter(Message.conversation_id == conversation.id).order_by(Message.timestamp).all()
+
+        # Convert messages to dictionary format
+        history = []
+        for message in messages:
+            history.append({
+                "id": message.id,
+                "role": message.role.value,
+                "content": message.content,
+                "timestamp": message.timestamp.isoformat()
+            })
+
+        return {
+            "conversation_id": conversation.id,
+            "messages": history
+        }
+    except Exception as e:
+        logger.error(f"Error getting chat history: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.post("/{user_id}", response_model=ChatResponse)
+async def chat_endpoint(
+    user_id: int,
+    request: ChatRequest,
+    db: Session = Depends(get_db_session)
+):
+    """
+    Stateless chat endpoint that:
+    1. Loads conversation history from DB
+    2. Creates conversation if none exists
+    3. Passes history to AI agent
+    4. Stores user and assistant messages
+    5. Remains completely stateless
+    """
+    try:
+        logger.info(f"Processing chat request for user {user_id}")
+
+        # Create or get conversation
+        conversation_id = await create_conversation_if_not_exists(
+            db, user_id, f"Chat {datetime.utcnow().strftime('%Y-%m-%d')}"
+        )
+
+        # Load conversation history from database
+        conversation_history = await get_conversation_history(db, user_id, conversation_id)
+
+        # Save user message to database BEFORE processing
+        await save_message(db, conversation_id, user_id, MessageRole.USER, request.message)
+
+        # Process the message with improved intent detection and friendlier responses
+        from src.models import Task, TaskStatus, TaskPriority
+        import re
+
+        user_msg_lower = request.message.lower().strip()
+
+        # Check for greeting first (before attempting other processing)
+        if any(greeting in user_msg_lower for greeting in ["hello", "hi", "hey", "greetings", "morning", "afternoon", "evening", "sup", "yo", "kya", "hal", "hai", "ola", "bonjour", "ciao"]):
+            ai_response = "Hey there! 👋 I'm your friendly AI assistant. I can help you manage your tasks - just tell me what you'd like to do! 😊"
+
+        # Check for help intent
+        elif any(help_word in user_msg_lower for help_word in ["help", "what can", "how to", "assist", "commands", "options", "features"]):
+            ai_response = """I'm here to help! 🤗 Here's what I can do for you:
+
+📝 **Create tasks**: Say "add task to buy groceries" or "create a task to call mom"
+📋 **List tasks**: Say "show my tasks" or "what do I have to do?"
+✅ **Complete tasks**: Say "mark task #1 as done" or "complete the first task"
+🗑️ **Delete tasks**: Say "remove task #2" or "delete the last task"
+❓ **Ask anything**: Just chat with me naturally!
+
+Try saying something like: "Create a task to finish homework" or "What are my pending tasks?" """
+
+        # List tasks intent detection - CHECK BEFORE general task word matching
+        elif any(word in user_msg_lower for word in ["list", "show", "view", "see", "my", "tasks", "pending", "todo", "to-do"]):
+            # Query user's tasks
+            status_filter = TaskStatus.COMPLETED
+            if any(word in user_msg_lower for word in ["pending", "todo", "to-do", "incomplete"]):
+                # Show only pending tasks
+                tasks = db.query(Task).filter(
+                    Task.user_id == user_id,
+                    Task.status != TaskStatus.COMPLETED
+                ).order_by(Task.created_at.desc()).all()
+            elif any(word in user_msg_lower for word in ["completed", "done", "finished"]):
+                # Show only completed tasks
+                tasks = db.query(Task).filter(
+                    Task.user_id == user_id,
+                    Task.status == TaskStatus.COMPLETED
+                ).order_by(Task.created_at.desc()).all()
+            else:
+                # Show all tasks
+                tasks = db.query(Task).filter(Task.user_id == user_id).order_by(Task.created_at.desc()).all()
+
+            if not tasks:
+                if any(word in user_msg_lower for word in ["pending", "todo", "to-do", "incomplete"]):
+                    ai_response = "You don't have any pending tasks right now! 🎉 Would you like to add something new?"
+                elif any(word in user_msg_lower for word in ["completed", "done", "finished"]):
+                    ai_response = "You don't have any completed tasks yet. Keep working on your todos! 💪"
+                else:
+                    ai_response = "You don't have any tasks yet! 📝 Would you like to add something new?"
+
+            else:
+                # Format task list nicely
+                task_list = []
+                for i, task in enumerate(tasks[:10]):  # Limit to 10 tasks
+                    status_emoji = "✅" if task.status == TaskStatus.COMPLETED else "⏳"
+                    task_list.append(f"{status_emoji} {i+1}. **{task.title}**")
+
+                if len(tasks) > 10:
+                    task_list.append(f"... and {len(tasks) - 10} more tasks")
+
+                task_summary = "\n".join(task_list)
+
+                if any(word in user_msg_lower for word in ["pending", "todo", "to-do", "incomplete"]):
+                    ai_response = f"Here are your pending tasks:\n{task_summary}\n\nKeep up the great work! 💪"
+                elif any(word in user_msg_lower for word in ["completed", "done", "finished"]):
+                    ai_response = f"Here are your completed tasks:\n{task_summary}\n\nAwesome job finishing these! 🎉"
+                else:
+                    ai_response = f"Here are your tasks:\n{task_summary}\n\nTotal: {len(tasks)} tasks. You've got this! 💪"
+
+        # Complete/mark done intent detection - CHECK BEFORE general task word matching
+        elif any(word in user_msg_lower for word in ["complete", "done", "finish", "mark", "completed", "tick", "check"]):
+            # Try to identify specific task to complete
+            task_num_match = re.search(r'(?:task|#)\s*(\d+)|(\d+)\s*(?:st|nd|rd|th)\s*(?:task|one|item)|first|last', request.message, re.IGNORECASE)
+
+            task_completed = None
+            if task_num_match:
+                # Try to complete specific task by number
+                num_str = task_num_match.group(1) or task_num_match.group(2)
+                if num_str:
+                    try:
+                        if num_str.lower() in ['first']:
+                            # Complete first/oldest pending task
+                            first_task = db.query(Task).filter(
+                                Task.user_id == user_id,
+                                Task.status != TaskStatus.COMPLETED
+                            ).order_by(Task.created_at).first()
+
+                            if first_task:
+                                first_task.status = TaskStatus.COMPLETED
+                                first_task.updated_at = datetime.utcnow()
+                                db.commit()
+                                task_completed = first_task
+                        elif num_str.lower() in ['last']:
+                            # Complete last/newest pending task
+                            last_task = db.query(Task).filter(
+                                Task.user_id == user_id,
+                                Task.status != TaskStatus.COMPLETED
+                            ).order_by(Task.created_at.desc()).first()
+
+                            if last_task:
+                                last_task.status = TaskStatus.COMPLETED
+                                last_task.updated_at = datetime.utcnow()
+                                db.commit()
+                                task_completed = last_task
+                        else:
+                            # Complete specific numbered task
+                            task_idx = int(num_str) - 1
+                            pending_tasks = db.query(Task).filter(
+                                Task.user_id == user_id,
+                                Task.status != TaskStatus.COMPLETED
+                            ).order_by(Task.created_at).all()
+
+                            if 0 <= task_idx < len(pending_tasks):
+                                task_to_complete = pending_tasks[task_idx]
+                                task_to_complete.status = TaskStatus.COMPLETED
+                                task_to_complete.updated_at = datetime.utcnow()
+                                db.commit()
+                                task_completed = task_to_complete
+                    except ValueError:
+                        pass  # Continue to default
+                elif num_str.lower() in ['first', 'last']:
+                    # Already handled above
+                    pass
+
+            if not task_completed:
+                # Default: complete the oldest pending task
+                first_task = db.query(Task).filter(
+                    Task.user_id == user_id,
+                    Task.status != TaskStatus.COMPLETED
+                ).order_by(Task.created_at).first()
+
+                if first_task:
+                    first_task.status = TaskStatus.COMPLETED
+                    first_task.updated_at = datetime.utcnow()
+                    db.commit()
+                    task_completed = first_task
+
+            if task_completed:
+                ai_response = f"🎉 Nice work! I've marked **{task_completed.title}** as completed. You're making great progress! 💪"
+            else:
+                ai_response = "You don't have any pending tasks to complete. Maybe you'd like to add a new one?"
+
+        # Delete/remove intent detection - CHECK BEFORE general task word matching
+        elif any(word in user_msg_lower for word in ["delete", "remove", "erase", "cancel", "kill", "trash"]):
+            task_num_match = re.search(r'(?:task|#)\s*(\d+)|(\d+)\s*(?:st|nd|rd|th)\s*(?:task|one|item)|first|last', request.message, re.IGNORECASE)
+
+            task_deleted = None
+            if task_num_match:
+                num_str = task_num_match.group(1) or task_num_match.group(2)
+                if num_str:
+                    try:
+                        if num_str.lower() in ['first']:
+                            # Delete first task
+                            first_task = db.query(Task).filter(Task.user_id == user_id).order_by(Task.created_at).first()
+                            if first_task:
+                                db.delete(first_task)
+                                db.commit()
+                                task_deleted = first_task
+                        elif num_str.lower() in ['last']:
+                            # Delete last task
+                            last_task = db.query(Task).filter(Task.user_id == user_id).order_by(Task.created_at.desc()).first()
+                            if last_task:
+                                db.delete(last_task)
+                                db.commit()
+                                task_deleted = last_task
+                        else:
+                            # Delete specific numbered task
+                            task_idx = int(num_str) - 1
+                            all_tasks = db.query(Task).filter(Task.user_id == user_id).order_by(Task.created_at).all()
+
+                            if 0 <= task_idx < len(all_tasks):
+                                task_to_delete = all_tasks[task_idx]
+                                db.delete(task_to_delete)
+                                db.commit()
+                                task_deleted = task_to_delete
+                    except ValueError:
+                        pass  # Invalid number
+
+            if task_deleted:
+                ai_response = f"🗑️ Got it! I've removed **{task_deleted.title}** from your list."
+            else:
+                ai_response = "I couldn't find a task to delete. Maybe you'd like to list your tasks first?"
+
+        # Enhanced intent detection with more natural language patterns
+        # Create/update task intent detection - ONLY IF OTHER INTENTS DON'T MATCH
+        elif any(word in user_msg_lower for word in ["create", "add", "make", "new", "update", "change", "modify", "edit"]):
+            # Extract task title from various patterns
+            task_patterns = [
+                r'(?:create|add|make|new|update|change|modify|edit)\s+(?:a\s+|the\s+|an\s+)?(?:task|to|for)?\s*(?:to\s+)?(.+?)(?:\.|$|please|now|and)',
+                r'(?:want to|need to|should|must|gonna|going to|will)\s+(.+?)(?:\.|$|please|now|and)',
+                r'(?:to|buy|get|do|buying|getting|doing)\s+(.+?)(?:\.|$|please|now|and)',
+                r'(?:task[:\s]+|task\s+to\s+)(.+?)(?:\.|$|please|now|and)'
+            ]
+
+            task_title = "New task"  # default
+            for pattern in task_patterns:
+                task_match = re.search(pattern, request.message, re.IGNORECASE)
+                if task_match:
+                    task_title = task_match.group(1).strip()
+                    break
+
+            # Clean up the title
+            task_title = re.sub(r'(task|to|for|a|an|the)', '', task_title, flags=re.IGNORECASE).strip()
+            if not task_title or len(task_title) < 2:
+                task_title = request.message.replace("create", "").replace("add", "").replace("make", "").replace("update", "").replace("change", "").strip()
+
+            if not task_title or len(task_title) < 2:
+                task_title = "New task"
+
+            # Check if this is an update to an existing task by number
+            task_num_match = re.search(r'(?:task|#)\s*(\d+)|(\d+)\s*(?:st|nd|rd|th)\s*(?:task|one)', request.message, re.IGNORECASE)
+
+            if task_num_match and any(word in user_msg_lower for word in ["update", "change", "modify", "edit"]):
+                # Update existing task
+                num_str = task_num_match.group(1) or task_num_match.group(2)
+                try:
+                    task_idx = int(num_str) - 1
+                    user_tasks = db.query(Task).filter(Task.user_id == user_id).order_by(Task.created_at).all()
+
+                    if 0 <= task_idx < len(user_tasks):
+                        task_to_update = user_tasks[task_idx]
+                        old_title = task_to_update.title
+                        task_to_update.title = task_title[:100]
+                        task_to_update.updated_at = datetime.utcnow()
+                        db.commit()
+
+                        ai_response = f"Got it! 😊 I've updated **'{old_title}'** to **'{task_to_update.title}'** in your list."
+                    else:
+                        ai_response = f"Sorry, I couldn't find task #{num_str}. You have {len(user_tasks)} tasks. Would you like to create a new task instead?"
+                except ValueError:
+                    # Not a valid number, treat as new task
+                    new_task = Task(
+                        user_id=user_id,
+                        title=task_title[:100],
+                        description=f"Created from AI request: {request.message[:200]}",
+                        status=TaskStatus.TODO,
+                        priority=TaskPriority.MEDIUM,
+                        created_at=datetime.utcnow(),
+                        updated_at=datetime.utcnow()
+                    )
+                    db.add(new_task)
+                    db.commit()
+                    db.refresh(new_task)
+                    ai_response = f"Got it! 😊 I've added **{new_task.title}** to your todo list."
+            else:
+                # Create new task
+                new_task = Task(
+                    user_id=user_id,
+                    title=task_title[:100],
+                    description=f"Created from AI request: {request.message[:200]}",
+                    status=TaskStatus.TODO,
+                    priority=TaskPriority.MEDIUM,
+                    created_at=datetime.utcnow(),
+                    updated_at=datetime.utcnow()
+                )
+
+                db.add(new_task)
+                db.commit()
+                db.refresh(new_task)
+
+                ai_response = f"Got it! 😊 I've added **{new_task.title}** to your todo list."
+
+        # List tasks intent detection
+        elif any(word in user_msg_lower for word in ["list", "show", "view", "see", "my", "tasks", "pending", "todo", "to-do"]):
+            # Query user's tasks
+            status_filter = TaskStatus.COMPLETED
+            if any(word in user_msg_lower for word in ["pending", "todo", "to-do", "incomplete"]):
+                # Show only pending tasks
+                tasks = db.query(Task).filter(
+                    Task.user_id == user_id,
+                    Task.status != TaskStatus.COMPLETED
+                ).order_by(Task.created_at.desc()).all()
+            elif any(word in user_msg_lower for word in ["completed", "done", "finished"]):
+                # Show only completed tasks
+                tasks = db.query(Task).filter(
+                    Task.user_id == user_id,
+                    Task.status == TaskStatus.COMPLETED
+                ).order_by(Task.created_at.desc()).all()
+            else:
+                # Show all tasks
+                tasks = db.query(Task).filter(Task.user_id == user_id).order_by(Task.created_at.desc()).all()
+
+            if not tasks:
+                if any(word in user_msg_lower for word in ["pending", "todo", "to-do", "incomplete"]):
+                    ai_response = "You don't have any pending tasks right now! 🎉 Would you like to add something new?"
+                elif any(word in user_msg_lower for word in ["completed", "done", "finished"]):
+                    ai_response = "You don't have any completed tasks yet. Keep working on your todos! 💪"
+                else:
+                    ai_response = "You don't have any tasks yet! 📝 Would you like to add something new?"
+
+            else:
+                # Format task list nicely
+                task_list = []
+                for i, task in enumerate(tasks[:10]):  # Limit to 10 tasks
+                    status_emoji = "✅" if task.status == TaskStatus.COMPLETED else "⏳"
+                    task_list.append(f"{status_emoji} {i+1}. **{task.title}**")
+
+                if len(tasks) > 10:
+                    task_list.append(f"... and {len(tasks) - 10} more tasks")
+
+                task_summary = "\n".join(task_list)
+
+                if any(word in user_msg_lower for word in ["pending", "todo", "to-do", "incomplete"]):
+                    ai_response = f"Here are your pending tasks:\n{task_summary}\n\nKeep up the great work! 💪"
+                elif any(word in user_msg_lower for word in ["completed", "done", "finished"]):
+                    ai_response = f"Here are your completed tasks:\n{task_summary}\n\nAwesome job finishing these! 🎉"
+                else:
+                    ai_response = f"Here are your tasks:\n{task_summary}\n\nTotal: {len(tasks)} tasks. You've got this! 💪"
+
+        # Complete/mark done intent detection
+        elif any(word in user_msg_lower for word in ["complete", "done", "finish", "mark", "completed", "tick", "check"]):
+            # Try to identify specific task to complete
+            task_num_match = re.search(r'(?:task|#)\s*(\d+)|(\d+)\s*(?:st|nd|rd|th)\s*(?:task|one|item)|first|last', request.message, re.IGNORECASE)
+
+            task_completed = None
+            if task_num_match:
+                # Try to complete specific task by number
+                num_str = task_num_match.group(1) or task_num_match.group(2)
+                if num_str:
+                    try:
+                        if num_str.lower() in ['first']:
+                            # Complete first/oldest pending task
+                            first_task = db.query(Task).filter(
+                                Task.user_id == user_id,
+                                Task.status != TaskStatus.COMPLETED
+                            ).order_by(Task.created_at).first()
+
+                            if first_task:
+                                first_task.status = TaskStatus.COMPLETED
+                                first_task.updated_at = datetime.utcnow()
+                                db.commit()
+                                task_completed = first_task
+                        elif num_str.lower() in ['last']:
+                            # Complete last/newest pending task
+                            last_task = db.query(Task).filter(
+                                Task.user_id == user_id,
+                                Task.status != TaskStatus.COMPLETED
+                            ).order_by(Task.created_at.desc()).first()
+
+                            if last_task:
+                                last_task.status = TaskStatus.COMPLETED
+                                last_task.updated_at = datetime.utcnow()
+                                db.commit()
+                                task_completed = last_task
+                        else:
+                            # Complete specific numbered task
+                            task_idx = int(num_str) - 1
+                            pending_tasks = db.query(Task).filter(
+                                Task.user_id == user_id,
+                                Task.status != TaskStatus.COMPLETED
+                            ).order_by(Task.created_at).all()
+
+                            if 0 <= task_idx < len(pending_tasks):
+                                task_to_complete = pending_tasks[task_idx]
+                                task_to_complete.status = TaskStatus.COMPLETED
+                                task_to_complete.updated_at = datetime.utcnow()
+                                db.commit()
+                                task_completed = task_to_complete
+                    except ValueError:
+                        pass  # Continue to default
+                elif num_str.lower() in ['first', 'last']:
+                    # Already handled above
+                    pass
+
+            if not task_completed:
+                # Default: complete the oldest pending task
+                first_task = db.query(Task).filter(
+                    Task.user_id == user_id,
+                    Task.status != TaskStatus.COMPLETED
+                ).order_by(Task.created_at).first()
+
+                if first_task:
+                    first_task.status = TaskStatus.COMPLETED
+                    first_task.updated_at = datetime.utcnow()
+                    db.commit()
+                    task_completed = first_task
+
+            if task_completed:
+                ai_response = f"🎉 Nice work! I've marked **{task_completed.title}** as completed. You're making great progress! 💪"
+            else:
+                ai_response = "You don't have any pending tasks to complete. Maybe you'd like to add a new one?"
+
+        # Delete/remove intent detection
+        elif any(word in user_msg_lower for word in ["delete", "remove", "erase", "cancel", "kill", "trash"]):
+            task_num_match = re.search(r'(?:task|#)\s*(\d+)|(\d+)\s*(?:st|nd|rd|th)\s*(?:task|one|item)|first|last', request.message, re.IGNORECASE)
+
+            task_deleted = None
+            if task_num_match:
+                num_str = task_num_match.group(1) or task_num_match.group(2)
+                if num_str:
+                    try:
+                        if num_str.lower() in ['first']:
+                            # Delete first task
+                            first_task = db.query(Task).filter(Task.user_id == user_id).order_by(Task.created_at).first()
+                            if first_task:
+                                db.delete(first_task)
+                                db.commit()
+                                task_deleted = first_task
+                        elif num_str.lower() in ['last']:
+                            # Delete last task
+                            last_task = db.query(Task).filter(Task.user_id == user_id).order_by(Task.created_at.desc()).first()
+                            if last_task:
+                                db.delete(last_task)
+                                db.commit()
+                                task_deleted = last_task
+                        else:
+                            # Delete specific numbered task
+                            task_idx = int(num_str) - 1
+                            all_tasks = db.query(Task).filter(Task.user_id == user_id).order_by(Task.created_at).all()
+
+                            if 0 <= task_idx < len(all_tasks):
+                                task_to_delete = all_tasks[task_idx]
+                                db.delete(task_to_delete)
+                                db.commit()
+                                task_deleted = task_to_delete
+                    except ValueError:
+                        pass  # Invalid number
+
+            if task_deleted:
+                ai_response = f"🗑️ Got it! I've removed **{task_deleted.title}** from your list."
+            else:
+                ai_response = "I couldn't find a task to delete. Maybe you'd like to list your tasks first?"
+
+        # Unclear intent - ask for clarification with guided options
+        else:
+            ai_response = f"""😊 I want to make sure I do the right thing.
+What would you like to do?
+
+You can say:
+• add task buy milk
+• show my tasks
+• update task 2 to buy bread
+• mark task 3 done
+• delete task 1
+
+Or ask for help if you're not sure!"""
+
+
+        # Save AI response to database
+        await save_message(db, conversation_id, user_id, MessageRole.ASSISTANT, ai_response)
+
+        # Update conversation timestamp
+        conversation = db.query(Conversation).filter(Conversation.id == conversation_id).first()
+        conversation.updated_at = datetime.utcnow()
+        db.commit()
+
+        # Return response
+        response = ChatResponse(
+            response=ai_response,
+            conversation_id=conversation_id,
+            timestamp=datetime.utcnow()
+        )
+
+        logger.info(f"Successfully processed chat request for user {user_id}")
+        return response
+
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        logger.error(f"Error in chat endpoint: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")

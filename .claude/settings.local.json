@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run dev)",
+      "Bash(powershell -Command \"Get-Content ''C:\\\\Users\\\\nahead\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\D--Coding-Q4-hackathontwo-ph23\\\\tasks\\\\b9e143a.output'' -Tail 10\")",
+      "Bash(curl -X POST http://localhost:8000/auth/register -H \"Content-Type: application/json\" -d \"{\"\"email\"\":\"\"finaltest@example.com\"\",\"\"password\"\":\"\"password123\"\"}\")",
+      "Bash(curl -X POST http://localhost:3001/api/tasks -H \"Content-Type: application/json\" -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMiIsImVtYWlsIjoidGVzdHVzZXJAZXhhbXBsZS5jb20iLCJleHAiOjE3Njk4NDc4ODF9.LumaiXeUNci_z1KpFC-VkJnkb7C8nWnCMZQ8Zr7c7I8\" -d \"{\"\"title\"\":\"\"Test Task for Update\"\"}\")",
+      "Bash(python accurate_ai_test.py)",
+      "Bash(cmd /c \"taskkill /IM python.exe /F\")",
+      "Bash(find backend -name \"*.pyc\" -delete)",
+      "Bash(find backend -name \"__pycache__\" -type d -exec rm -rf {} +)",
+      "Bash(find backend -name \"__pycache__\" -type d -exec rmdir /s /q {})",
+      "Bash(python -c \"\n# Check that the chat endpoint still has the correct structure\nwith open\\(''backend/src/api/chat.py'', ''r'', encoding=''utf-8''\\) as f:\n    content = f.read\\(\\)\n    list_count = content.count\\(''# List tasks intent detection''\\)\n    complete_count = content.count\\(''# Complete/mark done intent detection''\\)\n    delete_count = content.count\\(''# Delete/remove intent detection''\\)\n    create_count = content.count\\(''# Create/update task intent detection''\\)\n\nprint\\(f''Intent detection blocks: {list_count} list, {complete_count} complete, {delete_count} delete, {create_count} create''\\)\nprint\\(f''All singletons \\(no duplicates\\): {list_count == 1 and complete_count == 1 and delete_count == 1 and create_count == 1}''\\)\n\")",
+      "Bash(pkill -f \"python\")",
+      "Bash(taskkill /F /IM python.exe)",
+      "Bash(netstat -ano)",
+      "Bash(findstr :8080)",
+      "Bash(curl -X POST http://localhost:8080/api/auth/register -H \"Content-Type: application/json\" -d \"{\"\"email\"\":\"\"test@example.com\"\",\"\"password\"\":\"\"password123\"\",\"\"name\"\":\"\"Test User\"\"}\")",
+      "Bash(curl -X POST \"http://localhost:8080/api/chat/13\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMyIsImV4cCI6MTc3MDIyNTE4Nn0.M9ulQ7Qozdq3zJrUmsHdhE7ejQqMaQ3wvjmH5ybCKqY\" -d \"{\"\"message\"\":\"\"add task to test chatbot functionality\"\"}\")",
+      "Bash(curl -X GET \"http://localhost:8080/api/13/tasks?url_user_id=13\" -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMyIsImV4cCI6MTc3MDIyNTE4Nn0.M9ulQ7Qozdq3zJrUmsHdhE7ejQqMaQ3wvjmH5ybCKqY\")",
+      "Bash(.specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks)",
+      "Bash(curl -X POST http://localhost:8000/api/13/tasks -H \"Content-Type: application/json\" -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMyIsImV4cCI6MTc3MDI2NjE1Mn0.JnLL0c1lKwSNa5cZ2deEQ07c8Z1segNXzPZv3zDSOxE\" -d '{\"\"title\"\":\"\"Test task from frontend curl test\"\", \"\"description\"\":\"\"Created to test frontend functionality\"\"}')",
+      "Bash(curl -i -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMyIsImV4cCI6MTc3MDI3MDcwN30.opzqN1iMxXb28wgKIsprfaQX0Njk495e5RqIXGw1eE4\" http://localhost:3000/api/13/tasks)",
+      "Bash(curl -i -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMyIsImV4cCI6MTc3MDI3MDcwN30.opzqN1iMxXb28wgKIsprfaQX0Njk495e5RqIXGw1eE4\" http://localhost:8000/api/13/tasks)",
+      "Bash(curl -X POST http://localhost:8080/api/auth/register -H \"Content-Type: application/json\" -d '{\"\"email\"\":\"\"testuser@example.com\"\", \"\"password\"\":\"\"password123\"\", \"\"name\"\":\"\"Test User\"\"}')",
+      "Bash(curl:*)"
+    ]
+  }
+}
