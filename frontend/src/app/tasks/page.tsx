@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Trash2, Calendar } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { getAuthHeaders } from '../../lib/auth';
+import { getAuthHeaders } from '@/lib/auth';
 import dynamic from 'next/dynamic';
 
 // Dynamically import SVG icons to avoid hydration issues

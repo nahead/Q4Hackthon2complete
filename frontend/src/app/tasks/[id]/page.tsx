@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Task } from '@/shared/types/task';
-import { getAuthHeaders } from '../../../lib/auth';
+import { getAuthHeaders } from '@/lib/auth';
 import { useAuth } from '../../../contexts/AuthContext';
 
 export default function TaskDetailPage() {

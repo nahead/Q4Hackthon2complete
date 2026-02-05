@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { TaskCreate } from '../../../shared/types/task';
-import { getAuthHeaders } from '../lib/auth';
+import { getAuthHeaders } from '@/lib/auth';
 
 interface TaskFormProps {
   initialData?: Partial<TaskCreate>;
