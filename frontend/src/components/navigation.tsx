@@ -14,7 +14,7 @@ import {
   LogOut,
   User
 } from 'lucide-react';
-import { isAuthenticated } from '../lib/auth';
+import { isAuthenticated } from '@/lib/auth';
 
 export default function Navigation() {
   const [authStatus, setAuthStatus] = useState<boolean | null>(null); // Use null as initial state to indicate loading
