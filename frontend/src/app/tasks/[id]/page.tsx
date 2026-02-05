@@ -3,17 +3,33 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Task } from '../../../../../shared/types/task';
+import { Task } from '@/shared/types/task';
 import { getAuthHeaders } from '../../../lib/auth';
 import { useAuth } from '../../../contexts/AuthContext';
 
 export default function TaskDetailPage() {
-  const { id } = useParams();
+  const params = useParams();
+
+  // Check if params is null or if id is not available
+  if (!params || !params.id) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Task ID not provided</h2>
+          <Link href="/tasks" className="text-blue-600 hover:underline">
+            ← Back to Tasks
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const id = params.id as string;
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
   const [task, setTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -85,7 +101,7 @@ export default function TaskDetailPage() {
   };
 
   const deleteTask = async () => {
-    if (!user?.id || !window.confirm('Are you sure you want to delete this task?')) {
+    if (!user?.id || !confirm('Are you sure you want to delete this task?')) {
       return;
     }
 
