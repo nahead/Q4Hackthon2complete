@@ -1,55 +1,79 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report:
+Version change: 1.0.0 → 2.0.0
+Added sections: Core Principles (5 principles), Key Standards, Architecture Constraints, AI Framework Constraints, Prohibited Actions
+Removed sections: Technology Constraints, Authentication Rules, API Standards, Spec-Driven Workflow, Evaluation Criteria
+Modified principles: Phase II → Phase III (completely revised for AI-Powered Todo Chatbot)
+Templates requiring updates:
+- .specify/templates/plan-template.md ✅ updated
+- .specify/templates/spec-template.md ✅ updated
+- .specify/templates/tasks-template.md ✅ updated
+- .specify/templates/commands/*.md ⚠ pending
+Follow-up TODOs: None
+-->
+# Phase III – AI-Powered Todo Chatbot (Hackathon III) Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Agent Authority via Tools
+The AI agent must never directly manipulate data. All task operations must occur exclusively through MCP tools.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. Statelessness by Design
+No in-memory server state. All conversation and task state must persist in the database.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. Deterministic AI Integration
+The AI agent must behave predictably based on specs. Tool invocation logic must be auditable and reproducible.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### IV. Security & User Isolation
+All AI actions must respect authenticated user boundaries. JWT-derived user identity is the sole source of truth.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### V. Spec Traceability
+Every agent behavior, tool, and endpoint must trace back to a spec.
 
-### [PRINCIPLE_6_NAME]
+## Key Standards
+- MCP tools are the ONLY interface between AI and application logic
+- Stateless chat endpoint (`POST /api/{user_id}/chat`)
+- Conversation history reconstructed from database on every request
+- AI agents use MCP tools declaratively, never imperatively
+- Gemini (free tier) API is used instead of paid OpenAI keys
+- No vendor-locked or paid-only features allowed
 
+## Architecture Constraints
+- FastAPI backend hosts:
+  - Chat endpoint
+  - AI agent runner
+  - MCP server
+- MCP tools are stateless
+- Database stores:
+  - tasks
+  - conversations
+  - messages
+- Frontend uses ChatKit-style UI abstraction (provider-agnostic)
 
-[PRINCIPLE__DESCRIPTION]
+## AI Framework Constraints
+- Agent logic follows OpenAI Agents SDK patterns (ported to Gemini)
+- Tool calls are explicit, structured, and logged
+- Agent must confirm actions in natural language
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+## Prohibited Actions
+- AI directly querying or mutating database
+- Storing conversation state in memory
+- Bypassing MCP tools
+- Hard-coding prompts without specs
+- Mixing AI logic with business logic
+- Assuming paid OpenAI APIs
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+## Success Criteria
+- Users can manage todos via natural language
+- AI reliably invokes correct MCP tools
+- Conversation survives server restarts
+- Multi-user isolation enforced
+- Judges can trace: Spec → Tool → Agent → DB change
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
-
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+## Outcome
+A scalable, stateless, AI-native Todo system ready for cloud deployment and further agent orchestration.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
+This constitution governs all development activities for the Phase III AI-Powered Todo Chatbot. All developers must adhere to these principles and standards. Deviations require explicit approval and documentation of the reasoning. The constitution serves as the ultimate authority for development decisions and practices.
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
-
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 2.0.0 | **Ratified**: 2026-01-27 | **Last Amended**: 2026-01-31
