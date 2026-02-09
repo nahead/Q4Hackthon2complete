@@ -4,6 +4,7 @@ from typing import Generator
 import os
 import logging
 from contextlib import contextmanager
+from urllib.parse import urlparse, parse_qs
 from src.config import config
 
 # Suppress SQLAlchemy engine logging to reduce verbosity
@@ -25,8 +26,13 @@ else:
     if not ("neon" in DATABASE_URL.lower() or "postgresql" in DATABASE_URL.lower()):
         raise RuntimeError("Only PostgreSQL/Neon databases are allowed. SQLite is not permitted.")
 
-    # Create engine with proper SSL configuration for NeonDB
-    connect_args = {"sslmode": "require"}
+    # Parse sslmode from DATABASE_URL query parameters
+    parsed_url = urlparse(DATABASE_URL)
+    query_params = parse_qs(parsed_url.query)
+    sslmode = query_params.get('sslmode', ['require'])[0]  # Default to 'require' if not specified
+
+    # Create engine with SSL configuration from URL
+    connect_args = {"sslmode": sslmode}
 
 engine = create_engine(DATABASE_URL, echo=False, connect_args=connect_args)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

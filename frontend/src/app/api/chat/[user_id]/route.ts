@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(request: NextRequest, { params }: { params: { user_id: string } }) {
   try {
     console.log('Chat history proxy called for user:', params.user_id);
-    const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+    const backendUrl = process.env.API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
 
     // Get the auth token from headers
     const authHeader = request.headers.get('authorization');
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest, { params }: { params: { user_id:
 export async function POST(request: NextRequest, { params }: { params: { user_id: string } }) {
   try {
     console.log('Chat proxy called for user:', params.user_id);
-    const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+    const backendUrl = process.env.API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
 
     // Get the auth token from headers
     const authHeader = request.headers.get('authorization');

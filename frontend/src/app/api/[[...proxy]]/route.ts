@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 // Proxy handler for API requests
 async function proxyApiRequest(request: NextRequest, path: string) {
   try {
-    const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+    const backendUrl = process.env.API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
 
     // Check if the path matches the user-specific tasks pattern (e.g., "13/tasks", "13/tasks/5", etc.)
     // If so, we need to add the url_user_id query parameter for the backend

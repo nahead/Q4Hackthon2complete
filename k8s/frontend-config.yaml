@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-config
+  namespace: default
+data:
+  NEXT_PUBLIC_API_BASE_URL: "http://localhost:32647"
+  API_BASE_URL: "http://todo-backend:8080"
+  NEXT_PUBLIC_BETTER_AUTH_URL: "http://localhost:3000"

@@ -23,7 +23,20 @@
       "Bash(curl -i -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMyIsImV4cCI6MTc3MDI3MDcwN30.opzqN1iMxXb28wgKIsprfaQX0Njk495e5RqIXGw1eE4\" http://localhost:3000/api/13/tasks)",
       "Bash(curl -i -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMyIsImV4cCI6MTc3MDI3MDcwN30.opzqN1iMxXb28wgKIsprfaQX0Njk495e5RqIXGw1eE4\" http://localhost:8000/api/13/tasks)",
       "Bash(curl -X POST http://localhost:8080/api/auth/register -H \"Content-Type: application/json\" -d '{\"\"email\"\":\"\"testuser@example.com\"\", \"\"password\"\":\"\"password123\"\", \"\"name\"\":\"\"Test User\"\"}')",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(npx next dev)",
+      "Bash(/c/Users/nahead/AppData/Local/Microsoft/WinGet/Packages/Helm.Helm_Microsoft.Winget.Source_8wekyb3d8bbwe/windows-amd64/helm.exe repo add bitnami https://charts.bitnami.com/bitnami)",
+      "Bash(kubectl get configmaps -n todo-app)",
+      "Bash(kubectl get:*)",
+      "Bash(kubectl run:*)",
+      "Bash(kubectl set env:*)",
+      "Bash(kubectl rollout status:*)",
+      "Bash(kubectl logs:*)",
+      "Bash(kubectl exec:*)",
+      "Bash(kubectl wait:*)",
+      "Bash(kubectl create:*)",
+      "Bash(kubectl apply:*)",
+      "Bash(minikube image build:*)"
     ]
   }
 }

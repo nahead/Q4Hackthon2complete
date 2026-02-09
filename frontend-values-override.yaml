@@ -1,0 +1,14 @@
+image:
+  repository: todo-frontend
+  tag: actual-v2
+  pullPolicy: IfNotPresent
+
+service:
+  type: NodePort
+  port: 3000
+
+env:
+  - name: PORT
+    value: "3000"
+  - name: NEXT_PUBLIC_API_BASE_URL
+    value: "http://todo-backend:8080"

@@ -16,7 +16,7 @@ An AI-powered todo management application that combines natural language process
 ### Backend
 - **FastAPI**: Modern, fast web framework for building APIs with Python
 - **SQLModel**: SQL databases with Python types
-- **PostgreSQL**: Robust relational database (Neon-compatible)
+- **PostgreSQL**: Robust relational database (now deployed in-cluster with Bitnami Helm chart)
 - **Google Gemini**: AI model for natural language processing
 - **MCP SDK**: Model Context Protocol for tool-based AI interactions
 - **Better Auth**: User authentication and isolation
@@ -110,8 +110,21 @@ cp .env.example .env  # If available
 
 Required environment variables:
 - `GEMINI_API_KEY`: Google Gemini API key
-- `DATABASE_URL`: PostgreSQL connection string
+- `DATABASE_URL`: PostgreSQL connection string (when running locally, for Kubernetes deployment this is configured automatically)
 - `JWT_SECRET`: Secret for JWT signing
+
+## Kubernetes Deployment
+
+### In-Cluster PostgreSQL Setup
+The application now supports deploying PostgreSQL within the Kubernetes cluster using the Bitnami PostgreSQL Helm chart with persistent volumes.
+
+For Kubernetes deployment, use the umbrella chart:
+```bash
+# Deploy the complete application with in-cluster PostgreSQL
+helm upgrade --install todo-app ./helm/todo-app --namespace todo-app --create-namespace --wait
+```
+
+See `docs/postgres-deployment.md` for detailed deployment instructions.
 
 ## Usage
 

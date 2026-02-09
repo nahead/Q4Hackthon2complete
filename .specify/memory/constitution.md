@@ -1,9 +1,8 @@
 <!--
 Sync Impact Report:
-Version change: 1.0.0 → 2.0.0
-Added sections: Core Principles (5 principles), Key Standards, Architecture Constraints, AI Framework Constraints, Prohibited Actions
-Removed sections: Technology Constraints, Authentication Rules, API Standards, Spec-Driven Workflow, Evaluation Criteria
-Modified principles: Phase II → Phase III (completely revised for AI-Powered Todo Chatbot)
+Version change: 2.0.0 → 3.0.0
+Added sections: Containerization Requirements, Kubernetes Deployment Standards, AI-Assisted DevOps Principles, Local Development Environment Constraints
+Modified principles: Phase III → Phase IV (revised for Local Kubernetes Deployment of Todo Chatbot)
 Templates requiring updates:
 - .specify/templates/plan-template.md ✅ updated
 - .specify/templates/spec-template.md ✅ updated
@@ -11,7 +10,7 @@ Templates requiring updates:
 - .specify/templates/commands/*.md ⚠ pending
 Follow-up TODOs: None
 -->
-# Phase III – AI-Powered Todo Chatbot (Hackathon III) Constitution
+# Phase IV – Local Kubernetes Deployment of Todo Chatbot Constitution
 
 ## Core Principles
 
@@ -30,50 +29,54 @@ All AI actions must respect authenticated user boundaries. JWT-derived user iden
 ### V. Spec Traceability
 Every agent behavior, tool, and endpoint must trace back to a spec.
 
-## Key Standards
-- MCP tools are the ONLY interface between AI and application logic
-- Stateless chat endpoint (`POST /api/{user_id}/chat`)
-- Conversation history reconstructed from database on every request
-- AI agents use MCP tools declaratively, never imperatively
-- Gemini (free tier) API is used instead of paid OpenAI keys
-- No vendor-locked or paid-only features allowed
+## Containerization Requirements
+- Docker containers must be built using AI-generated Dockerfiles
+- All environment variables must be configurable via container environment
+- Images must follow multi-stage build patterns for optimization
+- Container images must support ARM64 and AMD64 architectures
+- No hardcoded secrets in Dockerfiles or build context
 
-## Architecture Constraints
-- FastAPI backend hosts:
-  - Chat endpoint
-  - AI agent runner
-  - MCP server
-- MCP tools are stateless
-- Database stores:
-  - tasks
-  - conversations
-  - messages
-- Frontend uses ChatKit-style UI abstraction (provider-agnostic)
+## Kubernetes Deployment Standards
+- All deployments must be defined through AI-generated Helm charts
+- Services must expose correct ports (frontend: 3000, backend: 8080)
+- Deployments must support configurable replica counts
+- Resource limits and requests must be defined for all containers
+- Health checks must be implemented for liveness and readiness probes
 
-## AI Framework Constraints
-- Agent logic follows OpenAI Agents SDK patterns (ported to Gemini)
-- Tool calls are explicit, structured, and logged
-- Agent must confirm actions in natural language
+## AI-Assisted DevOps Principles
+- All Docker and Kubernetes manifests must be AI-generated using Claude Code
+- Docker AI (Gordon) handles containerization tasks
+- kubectl-ai and Kagent handle Kubernetes orchestration
+- Infrastructure as Code must be version-controlled
+- All deployment steps must be reproducible and documented
+
+## Local Development Environment Constraints
+- Deployments must work on local Minikube clusters
+- Docker Desktop 4.53+ with Kubernetes enabled is required
+- Environment variables and ports must be correctly managed for local deployment
+- No manual coding - all manifests generated through Claude Code or AI agents
+- Support for scaling frontend/backend replicas must be enabled
 
 ## Prohibited Actions
-- AI directly querying or mutating database
-- Storing conversation state in memory
-- Bypassing MCP tools
-- Hard-coding prompts without specs
-- Mixing AI logic with business logic
-- Assuming paid OpenAI APIs
+- AI directly manipulating Kubernetes resources without manifests
+- Manual editing of generated Dockerfiles or Kubernetes manifests
+- Bypassing AI-assisted DevOps tools
+- Hard-coding environment-specific configurations
+- Mixing development and production configurations
+- Assuming cloud-only features without local equivalents
 
 ## Success Criteria
-- Users can manage todos via natural language
-- AI reliably invokes correct MCP tools
-- Conversation survives server restarts
-- Multi-user isolation enforced
-- Judges can trace: Spec → Tool → Agent → DB change
+- Docker containers built successfully for frontend and backend
+- Helm charts deploy services to local Minikube cluster
+- Frontend accessible at port 3000 and backend at 8080 locally
+- Reproducible deployment process on any local machine
+- Scalable frontend/backend replicas running in Kubernetes
+- All components properly integrated in containerized environment
 
 ## Outcome
-A scalable, stateless, AI-native Todo system ready for cloud deployment and further agent orchestration.
+A cloud-native, containerized Todo chatbot system deployed on local Kubernetes cluster using AI-assisted DevOps tools, ready for scaling and production deployment.
 
 ## Governance
-This constitution governs all development activities for the Phase III AI-Powered Todo Chatbot. All developers must adhere to these principles and standards. Deviations require explicit approval and documentation of the reasoning. The constitution serves as the ultimate authority for development decisions and practices.
+This constitution governs all development activities for the Phase IV Local Kubernetes Deployment of Todo Chatbot. All developers must adhere to these principles and standards. Deviations require explicit approval and documentation of the reasoning. The constitution serves as the ultimate authority for development decisions and practices.
 
-**Version**: 2.0.0 | **Ratified**: 2026-01-27 | **Last Amended**: 2026-01-31
+**Version**: 3.0.0 | **Ratified**: 2026-01-27 | **Last Amended**: 2026-02-05

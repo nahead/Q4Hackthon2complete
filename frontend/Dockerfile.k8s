@@ -1,0 +1,54 @@
+FROM node:18-alpine AS builder
+
+# Set up project structure to match local layout
+WORKDIR /app
+
+# Copy shared types first (at project root level)
+COPY shared/ ./shared/
+
+# Set working directory to frontend
+WORKDIR /app/frontend
+
+# Copy package files
+COPY frontend/package*.json ./
+
+# Install ALL dependencies (including devDependencies for build)
+RUN npm install
+
+# Copy source code
+COPY frontend/ ./
+
+# Build arguments for environment variables
+ARG API_BASE_URL=http://todo-backend:8080
+ARG NEXT_PUBLIC_API_BASE_URL=http://todo-backend:8080
+
+# Set environment variables for build
+ENV API_BASE_URL=${API_BASE_URL}
+ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
+
+# Build Next.js application
+RUN npm run build
+
+# Production stage
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY frontend/package*.json ./
+
+# Install production dependencies only
+RUN npm install --production
+
+# Copy built application from builder
+COPY --from=builder /app/frontend/.next ./.next
+COPY --from=builder /app/frontend/public ./public
+COPY --from=builder /app/frontend/next.config.js ./
+
+# Runtime environment variables
+ENV API_BASE_URL=http://todo-backend:8080
+ENV NEXT_PUBLIC_API_BASE_URL=http://todo-backend:8080
+
+EXPOSE 3000
+
+CMD ["npx", "next", "start", "-p", "3000", "-H", "0.0.0.0"]

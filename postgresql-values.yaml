@@ -1,0 +1,69 @@
+# PostgreSQL Configuration for Todo App
+# Values for Bitnami PostgreSQL Helm chart
+
+# Enable PostgreSQL
+enabled: true
+
+# PostgreSQL architecture
+architecture: standalone
+
+# Authentication settings
+auth:
+  postgresPassword: "postgres_password"  # Password for the postgres user
+  username: "todo_user"                  # Username for the new user to create
+  password: "todo_password"              # Password for the new user
+  database: "todo_db"                    # Name for the new database to create
+
+# Persistence settings
+persistence:
+  enabled: true                          # Enable persistent volume
+  size: 8Gi                             # Size of the persistent volume
+  storageClass: ""                      # Storage class to use (empty means default)
+
+# Primary server configuration
+primary:
+  persistence:
+    enabled: true
+    size: 8Gi
+    storageClass: ""
+
+  service:
+    type: ClusterIP                      # Expose via ClusterIP (internal only)
+    ports:
+      postgresql: 5432                   # PostgreSQL port
+
+# Resource limits and requests
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+# Metrics (optional, disabled by default)
+metrics:
+  enabled: false
+
+# Network policies (optional)
+networkPolicy:
+  enabled: false
+
+# Pod security context
+podSecurityContext:
+  enabled: true
+  fsGroup: 1001
+
+containerSecurityContext:
+  enabled: true
+  runAsUser: 1001
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+    add:
+      - CHOWN
+      - SETGID
+      - SETUID
+  readOnlyRootFilesystem: false

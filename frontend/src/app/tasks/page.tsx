@@ -57,11 +57,10 @@ export default function TasksPage() {
     }
 
     try {
-      // Direct call to backend API to bypass proxy issues
-      const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+      // Use Next.js API proxy route
       const headers = getAuthHeaders();
 
-      const response = await fetch(`${backendUrl}/api/${user.id}/tasks`, {
+      const response = await fetch(`/api/${user.id}/tasks`, {
         headers: headers,
       });
 
@@ -85,11 +84,10 @@ export default function TasksPage() {
     }
 
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
       const headers = getAuthHeaders();
       headers['Content-Type'] = 'application/json';
 
-      const response = await fetch(`${backendUrl}/api/${user.id}/tasks/${taskId}`, {
+      const response = await fetch(`/api/${user.id}/tasks/${taskId}`, {
         method: 'PUT',
         headers: headers,
         body: JSON.stringify({ completed: !currentStatus }),
@@ -101,7 +99,7 @@ export default function TasksPage() {
       }
 
       // Refresh the task list to ensure consistency with server state
-      const refreshResponse = await fetch(`${backendUrl}/api/${user.id}/tasks`, {
+      const refreshResponse = await fetch(`/api/${user.id}/tasks`, {
         headers: getAuthHeaders(),
       });
 
@@ -123,10 +121,9 @@ export default function TasksPage() {
     }
 
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
       const headers = getAuthHeaders();
 
-      const response = await fetch(`${backendUrl}/api/${user.id}/tasks/${taskId}`, {
+      const response = await fetch(`/api/${user.id}/tasks/${taskId}`, {
         method: 'DELETE',
         headers: headers,
       });
@@ -139,7 +136,7 @@ export default function TasksPage() {
       const responseJson = await response.json();
       if (responseJson.success) {
         // Refresh the task list to ensure consistency with server state
-        const refreshResponse = await fetch(`${backendUrl}/api/${user.id}/tasks`, {
+        const refreshResponse = await fetch(`/api/${user.id}/tasks`, {
           headers: getAuthHeaders(),
         });
 
